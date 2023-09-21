@@ -14,7 +14,7 @@ import {
     Spinner,
     Box
 } from '@chakra-ui/react'
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import Proptypes from 'prop-types'
 import { ChatState } from '../../Context/ChatProvider';
 import axios from 'axios';
@@ -29,9 +29,11 @@ const GroupChatModal = ({ children }) => {
     const [searchResult, setSearchResult] = useState([])
     const [loading, setLoading] = useState(false)
     const { user, chats, setChats } = ChatState();
+    const [search, setSearch] = useState('') 
 
-    const handleSearch = async (query) => {
-        if (!query || query === '') return setSearchResult([])
+    useEffect(() => {
+      const timeoutId=setTimeout( async() => {
+        if (!search || search === '') return setSearchResult([])
         try {
             setLoading(true)
             const config = {
@@ -39,8 +41,8 @@ const GroupChatModal = ({ children }) => {
                     Authorization: `Bearer ${user.token}`
                 }
             }
-
-            const { data } = await axios.get(`/api/user?search=${query}`, config);
+            
+            const { data } = await axios.get(`/api/user?search=${search}`, config);
             setLoading(false);
             setSearchResult(data);
         } catch (error) {
@@ -54,6 +56,16 @@ const GroupChatModal = ({ children }) => {
                 position: 'bottom-left'
             })
         }
+      }, 500);
+    
+      return () => {
+        clearTimeout(timeoutId)
+      }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search])
+    
+    const handleSearch = (query) => {
+        setSearch(query)   
     }
 
     const handleGroup = (userToAdd) => {
@@ -139,6 +151,7 @@ const GroupChatModal = ({ children }) => {
                             <Input
                                 placeholder='Add Users eg: John, Ansh, Jane'
                                 mb='1'
+                                value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
                             />
                         </FormControl>
